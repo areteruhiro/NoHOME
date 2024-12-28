@@ -47,10 +47,10 @@ jobs:
 
       - name: Check tag exists
         uses: mukunku/tag-exists-action@v1.6.0
-        if: inputs.release == 'true'
+        if: ${{ inputs.release == 'true' }}
         id: check-tag
         with:
-          tag: "${{ env.version }}"
+          tag: ${{ env.version }}
 
       - name: Set environment variables for signing
         run: |
@@ -59,7 +59,7 @@ jobs:
           echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> $GITHUB_ENV
 
       - name: Release check
-        if: inputs.release == 'true'
+        if: ${{ inputs.release == 'true' }}
         run: |
           if [ "${{ steps.check-tag.outputs.exists }}" == "true" ]; then
             echo -e "\nERROR!\nThe same tag already exists!\n"
@@ -77,14 +77,14 @@ jobs:
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
-        if: inputs.release != 'true'
+        if: ${{ inputs.release != 'true' }}
         with:
           name: ${{ env.repo }}(${{ env.version }}@${{ env.commit }})
           path: app/build/outputs/apk/debug/app-debug.apk
 
       - name: Release
         uses: softprops/action-gh-release@v2
-        if: inputs.release == 'true'
+        if: ${{ inputs.release == 'true' }}
         with:
           tag_name: ${{ env.version }}
           draft: false
