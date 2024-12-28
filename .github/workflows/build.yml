@@ -58,33 +58,20 @@ jobs:
           echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> $GITHUB_ENV
           echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> $GITHUB_ENV
 
-
-
       - name: Release check
         if: github.event.inputs.release == 'true'
         run: |
           if [ "${{ steps.check-tag.outputs.exists }}" == "true" ]; then
             echo -e "\nERROR!\nThe same tag already exists!\n"
             echo "Please change versionName in build.gradle"
-            echo ""
             exit 1
           fi
 
-      - name: Debug environment variables
-        run: |
-            echo "STORE_PASSWORD=${{ secrets.STORE_PASSWORD }}"
-            echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}"
-            echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}"
-
-
       - name: Build with Gradle
         run: |
-          chmod +x ./gradlew
+          ./gradlew assemble${{ if inputs.release == 'true' }}Release{{ else }}Debug{{ /if }} --no-daemon || exit 1
           if [ "${{ inputs.release }}" == "true" ]; then
-            ./gradlew assembleRelease --no-daemon
             cp -f app/build/outputs/apk/release/app-release.apk ${{ env.repo }}-${{ env.version }}.apk
-          else
-            ./gradlew assembleDebug --no-daemon
           fi
 
       - name: Upload APK
