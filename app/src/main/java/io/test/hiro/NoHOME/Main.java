@@ -44,8 +44,39 @@ public class Main implements IXposedHookLoadPackage {
                 new XC_MethodHook() {
                     @Override
                     protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                        param.setResult(null);
-                        handleLaunchIntent(param.thisObject);
+                        param.setResult(null); // オリジナルの処理を無効化
+
+                        // Surroundingクラスから外部のオブジェクトを取得
+                        Object launcherStateManager = XposedHelpers.getSurroundingThis(param.thisObject);
+
+                        // Context を取得
+                        Context context = null;
+                        try {
+                            context = (Context) XposedHelpers.callMethod(launcherStateManager, "getContext");
+                        } catch (NoSuchMethodError | ClassCastException e) {
+                            Log.e(TAG, "Failed to get context via getContext() method: " + e.getMessage());
+                        }
+
+                        // それでも取得できない場合、ActivityThreadから取得
+                        if (context == null) {
+                            Log.w(TAG, "Fallback to using ActivityThread to get application context.");
+                            try {
+                                context = (Context) XposedHelpers.callStaticMethod(
+                                        XposedHelpers.findClass("android.app.ActivityThread", null),
+                                        "currentApplication"
+                                );
+                            } catch (Exception e) {
+                                Log.e(TAG, "Failed to get context from ActivityThread: " + e.getMessage());
+                            }
+                        }
+
+                        if (context == null) {
+                            Log.e(TAG, "Unable to retrieve context. Exiting hook.");
+                            return;
+                        }
+
+                        // アプリ起動処理を実行
+                        handleLaunchIntent(context);
                     }
                 }
         );
@@ -58,7 +89,13 @@ public class Main implements IXposedHookLoadPackage {
                     @Override
                     protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                         param.setResult(null);
+                        Context context = (Context) XposedHelpers.getObjectField(param.thisObject, "mLauncher");
+                        if (context == null) {
+
+                            return;
+                        }
                         handleLaunchIntent(param.thisObject);
+
                     }
                 }
         );
