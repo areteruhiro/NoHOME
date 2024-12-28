@@ -44,7 +44,7 @@ public class Main implements IXposedHookLoadPackage {
                 new XC_MethodHook() {
                     @Override
                     protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                    
+                        param.setResult(null);
                         handleLaunchIntent(param.thisObject);
                     }
                 }
@@ -57,6 +57,7 @@ public class Main implements IXposedHookLoadPackage {
                 new XC_MethodHook() {
                     @Override
                     protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                        param.setResult(null);
                         handleLaunchIntent(param.thisObject);
                     }
                 }
