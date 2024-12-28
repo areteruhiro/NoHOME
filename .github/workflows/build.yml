@@ -58,6 +58,8 @@ jobs:
           echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> $GITHUB_ENV
           echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> $GITHUB_ENV
 
+
+
       - name: Release check
         if: github.event.inputs.release == 'true'
         run: |
@@ -70,16 +72,17 @@ jobs:
 
       - name: Debug environment variables
         run: |
-          echo "STORE_PASSWORD=${{ secrets.STORE_PASSWORD }}"
-          echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}"
-          echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}"
+            echo "STORE_PASSWORD=${{ secrets.STORE_PASSWORD }}"
+            echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}"
+            echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}"
+
 
       - name: Build with Gradle
         run: |
+          chmod +x ./gradlew
           if [ "${{ inputs.release }}" == "true" ]; then
             ./gradlew assembleRelease --no-daemon
-            apk_file="${{ env.repo }}-${{ env.version }}.apk"
-            cp -f app/build/outputs/apk/release/app-release.apk $apk_file
+            cp -f app/build/outputs/apk/release/app-release.apk ${{ env.repo }}-${{ env.version }}.apk
           else
             ./gradlew assembleDebug --no-daemon
           fi
@@ -88,7 +91,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: github.event.inputs.release != 'true'
         with:
-          name: ${{ env.repo }}-${{ env.version }}-${{ env.commit }}
+          name: ${{ env.repo }}(${{ env.version }}@${{ env.commit }})
           path: app/build/outputs/apk/debug/app-debug.apk
 
       - name: Release
@@ -98,4 +101,5 @@ jobs:
           tag_name: ${{ env.version }}
           draft: false
           prerelease: false
-          files: $apk_file
+          files: ${{ env.repo }}-${{ env.version }}.apk
+
