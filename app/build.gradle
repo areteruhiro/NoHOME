@@ -29,13 +29,13 @@ android {
     }
     buildTypes {
         debug {
-            minifyEnabled false
+            minifyEnabled true
             multiDexEnabled false
             proguardFiles += 'proguard-rules.pro'
             signingConfig signingConfigs.android
         }
         release {
-            minifyEnabled false // コードの最適化を無効にする
+            minifyEnabled true
             multiDexEnabled false
             proguardFiles += 'proguard-rules.pro'
             if (file('release.jks').exists()) {
