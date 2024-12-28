@@ -71,15 +71,20 @@ public class Main implements IXposedHookLoadPackage {
         }
 
         String targetPackage = getTargetPackageName();
-        Intent launchIntent = context.getPackageManager().getLaunchIntentForPackage(targetPackage);
+        if (targetPackage == null) {
+            Log.w(TAG, "No target package available. Exiting.");
+            return; // ターゲットパッケージ名が取得できなければ処理を終了
+        }
 
+        Intent launchIntent = context.getPackageManager().getLaunchIntentForPackage(targetPackage);
         if (launchIntent != null) {
             launchIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
             context.startActivity(launchIntent);
+            Log.d(TAG, "Successfully launched the app: " + targetPackage);
         } else {
+            Log.e(TAG, "Launch intent not found for package: " + targetPackage);
         }
     }
-
     private void savePackageNameToFile(String packageName) {
         File backupDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "Launcher");
         if (!backupDir.exists() && !backupDir.mkdirs()) {
@@ -95,19 +100,27 @@ public class Main implements IXposedHookLoadPackage {
 
     private String getTargetPackageName() {
         File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "Launcher/package_names.txt");
-        if (file.exists()) {
-            try {
-                List<String> packageNames = new ArrayList<>();
-                List<String> lines = Files.readAllLines(file.toPath());
-                packageNames.addAll(lines);
 
-                if (!packageNames.isEmpty()) {
-
-                    return packageNames.get(packageNames.size() - 1);
-                }
-            } catch (IOException e) {
-            }
+        if (!file.exists()) {
+            Log.w(TAG, "Package name file does not exist. Exiting.");
+            return null; // ファイルが存在しない場合、nullを返して終了
         }
-        return null;
+
+        try {
+            List<String> lines = Files.readAllLines(file.toPath());
+
+            if (lines.isEmpty()) {
+                Log.w(TAG, "Package name file is empty. Exiting.");
+                return null; // ファイルが空の場合、nullを返して終了
+            }
+
+            // 最後のパッケージ名を取得
+            return lines.get(lines.size() - 1);
+        } catch (IOException e) {
+            Log.e(TAG, "Failed to read package names from file: " + e.getMessage());
+            return null; // エラーが発生した場合もnullを返して終了
+        }
     }
+
+
 }
